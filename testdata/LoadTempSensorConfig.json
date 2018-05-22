@@ -1,0 +1,28 @@
+{
+    "d": {
+        "__type": "MyTagList.TempSensorConfig",
+        "email": "stojg.lindqvist@gmail.com",
+        "apnsSound": "Default",
+        "apns_pause": 60,
+        "send_email": false,
+        "send_tweet": false,
+        "temp_unit": 0,
+        "th_low": -2.2583074150149969,
+        "th_high": 27.991692584985003,
+        "th_window": 2,
+        "th_low_delay": 1,
+        "th_high_delay": 1,
+        "interval": 30,
+        "beep_pc": true,
+        "beep_pc_vibrate": false,
+        "beep_pc_tts": true,
+        "threshold_q": {
+            "__type": "MyTagList.Tag+ThresholdQuantization",
+            "min": -40,
+            "max": 125,
+            "step": 0.125,
+            "sample1": -2.2583074150149969,
+            "sample2": 27.991692584985003
+        }
+    }
+}
