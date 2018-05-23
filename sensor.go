@@ -10,9 +10,9 @@ type Sensor struct {
 	Name    string `json:"name"`
 	Comment string `json:"comment"`
 	//TempEventState int     `json:"tempEventState"` // Disarmed, TooLow, TooHigh, Normal
-	OutOfRange bool `json:"outOfRange"`
-	//Temperature    float64 `json:"temperature"`
-	SlaveID uint8 `json:"slaveId"`
+	OutOfRange  bool    `json:"outOfRange"`
+	Temperature float64 `json:"temperature"`
+	SlaveID     uint8   `json:"slaveId"`
 	//BatteryVolt    float64 `json:"batteryVolt"`
 	//Lux            float64 `json:"lux"`
 	//Humidity       float64 `json:"cap"` // humidity
@@ -20,7 +20,7 @@ type Sensor struct {
 	//ManagerName    string  `json:"managerName"`
 	TagType  int   `json:"tagType"`
 	LastComm int64 `json:"lastComm"`
-	//Alive          bool    `json:"alive"`
+	Alive    bool  `json:"alive"`
 	//SignaldBm      int     `json:"signaldBm"`
 	//Beeping        bool    `json:"beeping"`
 	//Lit            bool    `json:"lit"`
@@ -48,7 +48,8 @@ type Sensor struct {
 	//Ds18                bool    `json:"ds18"`
 	//BatteryRemaining    float64 `json:"batteryRemaining"`
 
-	Metrics MetricsCollection
+	Metrics           MetricsCollection
+	TemperatureConfig TemperatureSensorConfig
 }
 
 // Labels returns a map of key / value. 'name' and 'id' is always returned. The extra labels are added to the comment
