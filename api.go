@@ -207,6 +207,9 @@ func (c *Client) Get(since time.Time) ([]*Sensor, error) {
 
 		if t.hasTempSensor() {
 			temperatureTags = append(temperatureTags, t.SlaveID)
+			if err := c.setTemperatureConfig(t); err != nil {
+				return nil, err
+			}
 		}
 		if t.hasLightSensor() {
 			lightTags = append(lightTags, t.SlaveID)
@@ -318,6 +321,33 @@ func (c *Client) getMetrics(ids []uint8, mType metricType, metrics map[uint8]Met
 	return nil
 }
 
+func (c *Client) setTemperatureConfig(sensor *Sensor) error {
+
+	var resp *http.Response
+
+	resp, err := c.requestTemperatureConfig(sensor.SlaveID)
+	if err != nil {
+		return nil
+	}
+	defer closer(resp.Body)
+
+	var result map[string]interface{}
+
+	dec := json.NewDecoder(resp.Body)
+	if err = dec.Decode(&result); err != nil {
+		return fmt.Errorf("error parsing JSON response body: %v", err)
+	}
+
+	var config *TemperatureSensorConfig
+	if err = mapstructure.Decode(result["d"], &config); err != nil {
+		return fmt.Errorf("error while decoding sensor config data: %v", err)
+	}
+
+	sensor.TemperatureConfig = *config
+	return nil
+
+}
+
 func (c *Client) requestMetrics(ids []uint8, metricType string, since time.Time) (*http.Response, error) {
 	input := &getMultiTagStatsRawInput{
 		IDs:      ids,
@@ -344,11 +374,53 @@ func (c *Client) requestMetrics(ids []uint8, metricType string, since time.Time)
 	return c.httpClient.Do(req)
 }
 
+func (c *Client) requestTemperatureConfig(id uint8) (*http.Response, error) {
+
+	requestBody := []byte(fmt.Sprintf("{id: %d}", id))
+
+	u := c.url
+	u.Path = "ethClient.asmx/LoadTempSensorConfig"
+
+	req, err := http.NewRequest("POST", u.String(), bytes.NewBuffer(requestBody))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+c.token)
+	req.Header.Set("Content-Type", "application/json")
+
+	return c.httpClient.Do(req)
+}
+
+type TemperatureSensorConfig struct {
+	Email string `mapstructure:"email"`
+	//ApnsSound string  `mapstructure:"apnsSound"`
+	//ApnsPause int     `mapstructure:"apns_pause"`
+	//SendEmail bool    `mapstructure:"send_email"`
+	//SendTweet bool    `mapstructure:"send_tweet"`
+	TempUnit int     `mapstructure:"temp_unit"`
+	ThLow    float64 `mapstructure:"th_low"`
+	ThHigh   float64 `mapstructure:"th_high"`
+	//ThWindow      int     `mapstructure:"th_window"`
+	//ThLowDelay    int  `mapstructure:"th_low_delay"`
+	//ThHighDelay   int  `mapstructure:"th_high_delay"`
+	Interval int `mapstructure:"interval"`
+	//BeepPc        bool `mapstructure:"beep_pc"`
+	//BeepPcVibrate bool `mapstructure:"beep_pc_vibrate"`
+	//BeepPcTts     bool `mapstructure:"beep_pc_tts"`
+	//ThresholdQ    struct {
+	//	Min     float64 `mapstructure:"min"`
+	//	Max     float64 `mapstructure:"max"`
+	//	Step    float64 `mapstructure:"step"`
+	//	Sample1 float64 `mapstructure:"sample1"`
+	//	Sample2 float64 `mapstructure:"sample2"`
+	//} `mapstructure:"threshold_q"`
+}
+
 type getMultiTagStatsRawInput struct {
-	IDs      []uint8 `json:"ids"`
-	Type     string  `json:"type"`
-	FromDate string  `json:"fromDate"`
-	ToDate   string  `json:"toDate"`
+	IDs      []uint8 `mapstructure:"ids"`
+	Type     string  `mapstructure:"type"`
+	FromDate string  `mapstructure:"fromDate"`
+	ToDate   string  `mapstructure:"toDate"`
 }
 
 // IDs []uint8 encodes as a base64-encoded string, so we need our own marshalling
